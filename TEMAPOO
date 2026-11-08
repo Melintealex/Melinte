@@ -1,0 +1,247 @@
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+enum Zona { CENTRALA = 1, PERIFERICA = 2 };
+
+class Cofetarie {
+private:
+	const int id;
+	string denumire;
+	Zona zona;
+	int nrLocuri;
+	float* vectorConsumatie;
+
+public:
+	static int nrCofetarii;
+
+	Cofetarie() : id(++nrCofetarii) {
+		this->denumire = "Default";
+		this->nrLocuri = 0;
+		this->zona = PERIFERICA;
+		this->vectorConsumatie = nullptr;
+	}
+
+	Cofetarie(int id, string denumire, Zona zona, int nrLocuri, float* vectorConsumatie)
+		: id(id) {
+		this->denumire = denumire;
+		this->zona = zona;
+		this->nrLocuri = nrLocuri;
+		this->vectorConsumatie = new float[nrLocuri];
+		for (int i = 0; i < this->nrLocuri; i++) {
+			this->vectorConsumatie[i] = vectorConsumatie[i];
+		}
+		nrCofetarii++;
+	}
+
+	Cofetarie(const Cofetarie& c) : id(++nrCofetarii) {
+		this->denumire = c.denumire;
+		this->nrLocuri = c.nrLocuri;
+		this->zona = c.zona;
+
+		if (c.vectorConsumatie != nullptr) {
+			this->vectorConsumatie = new float[c.nrLocuri];
+			for (int i = 0; i < c.nrLocuri; i++) {
+				this->vectorConsumatie[i] = c.vectorConsumatie[i];
+			}
+		}
+		else {
+			this->vectorConsumatie = nullptr;
+		}
+	}
+
+	void operator=(const Cofetarie& c) {
+		if (this == &c) return; // Evitarea auto-asignării (ex: obj = obj)
+
+		this->denumire = c.denumire;
+		this->nrLocuri = c.nrLocuri;
+		this->zona = c.zona;
+
+		if (this->vectorConsumatie != nullptr) {
+			delete[] this->vectorConsumatie;
+			this->vectorConsumatie = nullptr;
+		}
+
+		if (c.vectorConsumatie != nullptr) {
+			this->vectorConsumatie = new float[c.nrLocuri];
+			for (int i = 0; i < c.nrLocuri; i++) {
+				this->vectorConsumatie[i] = c.vectorConsumatie[i];
+			}
+		}
+		else {
+			this->vectorConsumatie = nullptr;
+		}
+	}
+
+    // CERINȚA 1: Supraîncărcarea operatorului << (Afișare)
+	friend ostream& operator<<(ostream& out, const Cofetarie& c) {
+		out << "\n--- Date Cofetarie ---";
+		out << "\nId: " << c.id;
+		out << "\nDenumire: " << c.denumire;
+		out << "\nNr locuri: " << c.nrLocuri;
+		out << "\nZona: " << (c.zona == 1 ? "CENTRALA" : "PERIFERICA");
+
+		if (c.nrLocuri > 0 && c.vectorConsumatie != nullptr) {
+			out << "\nConsumatie per locuri: ";
+			for (int i = 0; i < c.nrLocuri - 1; i++) {
+				out << c.vectorConsumatie[i] << ", ";
+			}
+			out << c.vectorConsumatie[c.nrLocuri - 1] << ".";
+		}
+		out << "\n----------------------";
+		return out;
+	}
+
+	// CERINȚA 1: Supraîncărcarea operatorului >> (Citire)
+	friend istream& operator>>(istream& in, Cofetarie& c) {
+		cout << "\nIntroduceti denumirea: ";
+		in >> c.denumire;
+		
+		int z;
+		cout << "Introduceti zona (1 pentru CENTRALA, 2 pentru PERIFERICA): ";
+		in >> z;
+		c.zona = (z == 1) ? CENTRALA : PERIFERICA;
+
+		cout << "Introduceti numarul de locuri: ";
+		in >> c.nrLocuri;
+
+		if (c.vectorConsumatie != nullptr) {
+			delete[] c.vectorConsumatie;
+		}
+
+		if (c.nrLocuri > 0) {
+			c.vectorConsumatie = new float[c.nrLocuri];
+			cout << "Introduceti consumatia pentru cele " << c.nrLocuri << " locuri:\n";
+			for (int i = 0; i < c.nrLocuri; i++) {
+				cout << "Locul " << i + 1 << ": ";
+				in >> c.vectorConsumatie[i];
+			}
+		}
+		else {
+			c.vectorConsumatie = nullptr;
+		}
+		return in;
+	}
+
+	// CERINȚA 2: Operatorul index []
+	float& operator[](int index) {
+		if (index >= 0 && index < this->nrLocuri && this->vectorConsumatie != nullptr) {
+			return this->vectorConsumatie[index];
+		}
+		else {
+			throw out_of_range("Index invalid pentru vectorConsumatie!");
+		}
+	}
+
+	// CERINȚA 3: Metodă de calcul (Incasări totale)
+	float calculeazaIncasariTotale() {
+		float suma = 0;
+		if (this->vectorConsumatie != nullptr) {
+			for (int i = 0; i < this->nrLocuri; i++) {
+				suma += this->vectorConsumatie[i];
+			}
+		}
+		return suma;
+	}
+
+	// Metodele tale originale au rămas intacte mai jos (getteri/setteri)
+	void afisareCofetarie() {
+		cout << endl << "Id: " << this->id;
+		cout << endl << "Denumire: " << this->denumire;
+		cout << endl << "Nr locuri: " << this->nrLocuri;
+		cout << endl << "Zona: " << (this->zona == 1 ? "CENTRALA" : "PERIFERICA");
+
+		if (this->nrLocuri > 0 && this->vectorConsumatie != nullptr) {
+			cout << endl << "Consumatie per locuri: ";
+			for (int i = 0; i < this->nrLocuri - 1; i++) {
+				cout << this->vectorConsumatie[i] << ", ";
+			}
+			cout << this->vectorConsumatie[this->nrLocuri - 1] << ".";
+		}
+	}
+
+	int getNrLocuri() { return this->nrLocuri; }
+
+	void setNrLocuri(int nrLocuriNou) {
+		if (nrLocuriNou >= 0) {
+			this->nrLocuri = nrLocuriNou;
+		}
+		else {
+			throw "Valoare negativa";
+		}
+	}
+
+	float* getVectorConsumatie() {
+		if (this->vectorConsumatie == nullptr) return nullptr;
+		float* vectorConsumatieNou = new float[this->nrLocuri];
+		for (int i = 0; i < this->nrLocuri; i++) {
+			vectorConsumatieNou[i] = this->vectorConsumatie[i];
+		}
+		return vectorConsumatieNou;
+	}
+
+	void setVectorConsumatie(float* vector, int nrL) {
+		setNrLocuri(nrL);
+		if (this->vectorConsumatie != nullptr) {
+			delete[] this->vectorConsumatie;
+		}
+		this->vectorConsumatie = new float[this->nrLocuri];
+		for (int i = 0; i < this->nrLocuri; i++) {
+			this->vectorConsumatie[i] = vector[i];
+		}
+	}
+
+	~Cofetarie() {
+		if (this->vectorConsumatie != nullptr) {
+			delete[] this->vectorConsumatie;
+		}
+	}
+
+	bool operator<(const Cofetarie& c) {
+		return this->nrLocuri < c.nrLocuri;
+	}
+};
+
+int Cofetarie::nrCofetarii = 0;
+
+int main() { // Modificat din void main() in int main()
+	Cofetarie cNedelya;
+	cout << cNedelya; // Folosim noul operator <<
+
+	float* vectorConsumatie = new float[3] {35, 27, 41};
+	Cofetarie* pMinimal = new Cofetarie(7, "Minimal", CENTRALA, 3, vectorConsumatie);
+	cout << *pMinimal;
+
+	Cofetarie cRomana = *pMinimal;
+	
+	// Testăm noul operator []
+	cout << "\n\nModificam consumatia de pe primul loc de la Cofetaria Romana folosind operatorul []...";
+	cRomana[0] = 100.5f; 
+	cout << cRomana;
+
+	// Testăm metoda de calcul
+	cout << "\nIncasari totale Cofetaria Romana: " << cRomana.calculeazaIncasariTotale() << " RON";
+
+	cNedelya = *pMinimal;
+
+	cout << "\n\nAm construit " << Cofetarie::nrCofetarii << " cofetarii!";
+
+	if (cNedelya < cRomana) {
+		cout << "\nCofetaria Nedelya are mai putine locuri!";
+	}
+	else {
+		cout << "\nCofetaria Romana are la fel sau mai multe locuri!";
+	}
+
+	/* Testare citire de la tastatura (Poti decomenta liniile de mai jos ca sa vezi cum merge)
+	Cofetarie cNoua;
+	cin >> cNoua;
+	cout << cNoua;
+	*/
+
+	delete[] vectorConsumatie; // E bine sa stergem vectorul alocat in main
+	delete pMinimal;
+
+	return 0; // Standard C++
+}
